@@ -20,6 +20,8 @@ from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('template.urls')),
-    path('', include('user.urls')),
+    path('user/', include('user.urls')),
+    path('accounts/',include('allauth.urls')),
+    path('firebase/', include('firebase_app.urls')),
     
 ]

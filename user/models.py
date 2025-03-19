@@ -7,12 +7,7 @@ class UserManager(BaseUserManager):
         if not email:
             raise ValueError('The Email field must be set')
         email = self.normalize_email(email)
-        extra_fields.setdefault('is_active', True)
-
-        # Ensure the group with ID 3 exists or create it
-        group, created = Group.objects.get_or_create(id=3, name='End User')  # Adjust the name if needed
-        extra_fields['role'] = group
-
+        extra_fields.setdefault('is_active', True)  # Ensure user is active
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
@@ -29,14 +24,14 @@ class UserManager(BaseUserManager):
 
         return self.create_user(email, password, **extra_fields)
 
-
 class User(AbstractUser):
-    email = models.EmailField(unique=True)
-    username = None  # Removing username field
+    email = models.EmailField(unique=True)  # Ensure email is unique
+    password = models.CharField(max_length=300, validators=[MinLengthValidator(8)])
+    username = models.CharField(max_length=300, null=True, blank=True)
     phone = models.CharField(max_length=10, validators=[RegexValidator(r'^\d{10}$')])
-    role = models.ForeignKey(Group, related_name='user_groups', on_delete=models.CASCADE, null=True)
+    role = models.ForeignKey(Group, related_name='user_groups', on_delete=models.CASCADE, default=3)
     is_active = models.BooleanField(default=True)
-
+  
     groups = models.ManyToManyField(
         Group,
         related_name="custom_user_groups",
@@ -48,10 +43,12 @@ class User(AbstractUser):
         blank=True
     )
 
-    USERNAME_FIELD = 'email'
+    USERNAME_FIELD = 'email'  # Login with email
     REQUIRED_FIELDS = []
 
     objects = UserManager()
 
     def __str__(self):
         return self.email
+
+

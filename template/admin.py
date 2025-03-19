@@ -4,7 +4,7 @@ from .models import *
 
 @admin.register(Notification)
 class NotificationAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'message', 'created_at')
+    list_display = ('user_id', 'message','is_read', 'created_at')
     
 @admin.register(Cart)
 class CartAdmin(admin.ModelAdmin):
