@@ -92,31 +92,55 @@ class PurchaseDetailApiView(GenericAPIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+from rest_framework import viewsets
+from rest_framework.response import Response
+from rest_framework.decorators import action
+from .models import AddToCart
+from .serializers import AddToCartSerializer
+
 class AddToCartViewSet(viewsets.ModelViewSet):
     queryset = AddToCart.objects.all()
     serializer_class = AddToCartSerializer
-    permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        return AddToCart.objects.filter(user=self.request.user)
+    @action(detail=False, methods=['post'])
+    def add_to_cart(self, request):
+        user = request.user
 
-    def perform_create(self, serializer):
-        user = self.request.user
-        product = serializer.validated_data['product']
-        quantity = serializer.validated_data['quantity']
-        
-        # Check if the product already exists in the user's cart
-        cart_item = AddToCart.objects.filter(user=user, product=product).first()
-        
-        if cart_item:
-            # If the product is already in the cart, update the quantity
-            cart_item.quantity += quantity
-            cart_item.total_price = cart_item.quantity * cart_item.product.price  # Recalculate the total price
-            cart_item.save()  # Save the updated cart item
-        else:
-            
-            serializer.save(user=user)
+        # Check if user is authenticated
+        if not user.is_authenticated:
+            return Response({"error": "User is not authenticated."}, status=400)
 
+        product_id = request.data.get('product')
+        quantity = request.data.get('quantity')
+
+        # Validate required fields
+        if not product_id or not quantity:
+            return Response({"error": "Product and quantity are required."}, status=400)
+
+        try:
+            # Ensure product exists
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            return Response({"error": "Product not found."}, status=404)
+
+        # Ensure quantity is a positive integer
+        try:
+            quantity = int(quantity)
+            if quantity <= 0:
+                return Response({"error": "Quantity must be greater than zero."}, status=400)
+        except ValueError:
+            return Response({"error": "Quantity must be a valid integer."}, status=400)
+
+        # Create AddToCart instance
+        add_to_cart_instance = AddToCart.objects.create(
+            user=user,
+            product=product,
+            quantity=quantity,
+        )
+
+        # Serialize the created AddToCart instance and return response
+        serializer = AddToCartSerializer(add_to_cart_instance)
+        return Response(serializer.data, status=201)
 
 class CartItemViewSet(viewsets.ModelViewSet):
     queryset = CartItem.objects.all()
@@ -140,13 +164,32 @@ from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from .models import Billing
 from .serializers import BillingSerializer
-
 class BillingApiView(viewsets.ModelViewSet):
     queryset = Billing.objects.all()
     serializer_class = BillingSerializer
-    permission_classes = [IsAuthenticated] 
-    search_fields = ['user__username', 'status']
+    permission_classes = [IsAuthenticated]
 
+    def create(self, request, *args, **kwargs):
+        user = request.user
+        
+        # Access cart items through the related name defined in AddToCart model
+        cart_items = AddToCart.objects.filter(user=user)  # No need to modify AddToCart model
+
+        if not cart_items:
+            return Response({"error": "No items in cart."}, status=status.HTTP_400_BAD_REQUEST)
+
+        total_amount = sum(item.total_price for item in cart_items)
+        
+        # Here we use 'total' instead of 'total_amount'
+        billing_instance = Billing.objects.create(
+            user=user,
+            total=total_amount,  # Use total instead of total_amount
+            status='Pending'  # Or any default status
+        )
+
+        # You can add more logic to handle the payment and other fields
+        serializer = self.get_serializer(billing_instance)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response

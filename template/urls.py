@@ -1,11 +1,14 @@
 from django.urls import path, include
 from django.contrib import admin
 from django.urls import path
+from rest_framework.routers import DefaultRouter
 from .views import *
 
+router = DefaultRouter()
+router.register(r'addtocart', AddToCartViewSet, basename='addtocart')
 
 urlpatterns = [
-   
+    path('api/', include(router.urls)),
     
     path('product_category/',ProductCategoryApiView.as_view({'get':'list', 'post':'create'}), name="product_category"),
     path('product_category/<int:pk>/',ProductCategoryApiView.as_view({'get':'retrieve', 'put':'update', 'patch':'partial_update', 'delete':'destroy'}), name="product_category_detail"),
@@ -19,8 +22,7 @@ urlpatterns = [
     path('billing/',BillingApiView.as_view({'get':'list', 'post':'create'}), name="billing"),
     path('billing/<int:pk>/',BillingApiView.as_view({'get':'retrieve', 'put':'update', 'patch':'partial_update', 'delete':'destroy'}), name="billing_detail"),
     
-    path('addtocart/',AddToCartViewSet.as_view({'get':'list', 'post':'create'}), name="addtocart"),
-    path('addtocart/<int:pk>/',AddToCartViewSet.as_view({'get':'retrieve', 'put':'update', 'patch':'partial_update', 'delete':'destroy'}), name="addtocart_detail"),
+    
     
     path('cartitem/',CartItemViewSet.as_view({'get':'list', 'post':'create'}), name="cartitem"),
     path('cartitem/<int:pk>/',CartItemViewSet.as_view({'get':'retrieve', 'put':'update', 'patch':'partial_update', 'delete':'destroy'}), name="cartitem_detail"),

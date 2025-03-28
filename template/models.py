@@ -51,22 +51,19 @@ class Product(models.Model):
 
 
 class AddToCart(models.Model):
-    user =  models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,related_name="cart_items")
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    quantity = models.IntegerField(default=1)
-    added_date = models.DateTimeField(default=now)
-    total_price = models.DecimalField(
-        max_digits=10, decimal_places=2, null=True, blank=True
-    )
+    quantity = models.PositiveIntegerField()
+    added_date = models.DateTimeField(auto_now_add=True)
+    total_price = models.DecimalField(max_digits=10, decimal_places=2, editable=False, default=0)
 
     def save(self, *args, **kwargs):
-        self.total_price = Decimal(self.quantity) * self.product.price
-        super(AddToCart, self).save(*args, **kwargs)
+        # Calculate the total price based on the product price and quantity
+        self.total_price = self.product.price * self.quantity
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.user.name} - {self.product.name} ({self.quantity})"
-
-
+        return f"{self.user.username} - {self.product.name} - {self.quantity}"
 class CartItem(models.Model):
     cart = models.ForeignKey(AddToCart, on_delete=models.CASCADE, related_name="cart_items")
     product = models.ForeignKey("Product", on_delete=models.CASCADE, related_name="cart_items")
@@ -85,6 +82,8 @@ class Purchase(models.Model):
         cart_items = self.cart_id.all()  # Get all related cart items
         item_details = ", ".join([f"{item.product.name} ({item.quantity})" for item in cart_items])
         return f"Purchase: {item_details} - Total: {self.total}"
+    
+    
 
 
 class Billing(models.Model):
@@ -110,7 +109,7 @@ class Billing(models.Model):
             super().save(update_fields=["total"])
 
     def __str__(self):
-        return f"Billing for {self.user.name} - Total: {self.total}"
+        return f"Billing for {self.user.username} - Total: {self.total}"
 class Review(models.Model):
     email = models.EmailField(null=True, blank=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="reviews")

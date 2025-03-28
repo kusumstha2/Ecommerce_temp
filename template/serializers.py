@@ -32,8 +32,11 @@ class ProductCategorySerializer(serializers.ModelSerializer):
 class ReviewSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance)
+        user = instance.user  # Get the user instance
+
         representation['product_name'] = instance.product.name if instance.product else None
-        representation['user_name'] = instance.user.get_full_name() if instance.user else None
+        representation['user_email'] = user.email if user and user.email else None  
+
         return representation
 
     def validate_rating(self, value):
@@ -44,6 +47,8 @@ class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
         fields = '__all__'
+
+
 
 
 
@@ -130,32 +135,11 @@ class BillingSerializer(serializers.ModelSerializer):
         billing.save()
         return billing
     
-    
+from rest_framework import serializers
+from .models import AddToCart  # Import your model
+from decimal import Decimal
+
 class AddToCartSerializer(serializers.ModelSerializer):
-    user = serializers.PrimaryKeyRelatedField(read_only=True)
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        price = representation.get('price')
-        quantity = representation.get('quantity')
-        if price is not None and quantity is not None:
-            total = Decimal(price) * Decimal(quantity)
-            representation['total'] = str(total)
-        representation['user'] = instance.user.name 
-        representation['product'] = instance.product.name 
-        return representation
     class Meta:
         model = AddToCart
-        fields = ['id', 'user', 'product', 'quantity', 'added_date', 'total_price']
-        read_only_fields = ['total_price', 'added_date']    
-        def validate_quantity(self, value):
-        
-           if value <= 0:
-            raise serializers.ValidationError("Quantity must be greater than zero.")
-           return value
-
-  
-    def update(self, instance, validated_data):
-        instance.quantity = validated_data.get('quantity', instance.quantity)
-        instance.total_price = instance.quantity * instance.product.price
-        return super().update(instance, validated_data)
-    
+        fields = ['id', 'user', 'product', 'quantity', 'total_price', 'added_date']
