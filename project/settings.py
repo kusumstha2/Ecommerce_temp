@@ -60,6 +60,9 @@ INSTALLED_APPS = [
     'dj_rest_auth.registration',
     
     'firebase_app',
+    'paypal.standard.ipn',
+    'Payment',
+    'drf_spectacular',
 ]
 
 MIDDLEWARE = [
@@ -75,6 +78,13 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'project.urls'
+#For Nepali time zone
+TIME_ZONE = 'Asia/Kathmandu'
+# Ensure USE_TZ is set to True to enable timezone support
+USE_TZ = True
+from django.utils.timezone import now
+def nepal_time_default():
+    return now()
 
 AUTH_USER_MODEL = "user.User"
 
@@ -89,6 +99,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+               
             ],
         },
     },
@@ -158,7 +169,8 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+    ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
     
 
@@ -192,4 +204,20 @@ SOCIALACCOUNT_PROVIDERS = {
         },
     }
 }
+
+PAYPAL_RECEIVER_EMAIL ="krijalsuwal67@gmail.com"
+PAYPAL_TEST = True
+
+STRIPE_PUBLIC_KEY = "pk_test_51R4yf1P0lraDppKvrmKlB2U1BySnSUSiA2b3k2b3hOcUdh95EvGc06KLUoXreACDNlGzGvDr4RzZPfdGv5ydbASK00degXRjcD"
+STRIPE_SECRET_KEY = "sk_test_51R4yf1P0lraDppKvu4DGgTBDvFaXQBPFOl2T4PrlgosvokhEwFQVNioHKHG6nQSZuxpM0JLBvyA1LpdXROqMK4hS00OVgQNngp"
+STRIPE_WEBHOOK_SECRET="whsec_52b4875bab6404eafaddd1df6ee78c0f9a219db67e3947b44aa74b7070c5ff58"
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'kusumshrestha367@gmail.com' 
+EMAIL_HOST_PASSWORD = 'dfcyjywgwtexzsoo'
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER  
+
 

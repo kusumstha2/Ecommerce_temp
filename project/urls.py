@@ -15,13 +15,25 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include,re_path
+from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
+from django.shortcuts import redirect
+
+def redirect_to_admin(request):
+    return redirect('/admin/')
 
 urlpatterns = [
+    re_path(r'^$', redirect_to_admin),
     path('admin/', admin.site.urls),
-    path('', include('template.urls')),
+    path('templates/', include('template.urls')),
     path('user/', include('user.urls')),
     path('accounts/',include('allauth.urls')),
     path('firebase/', include('firebase_app.urls')),
+    path('pay/',include('Payment.urls')),
+    path('paypal/',include('paypal.standard.ipn.urls')),
+    
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('swagger/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('api/schema/redoc/', SpectacularRedocView.as_view(url_name='schema'),name='redoc'),
     
 ]
