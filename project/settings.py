@@ -88,6 +88,9 @@ def nepal_time_default():
 
 AUTH_USER_MODEL = "user.User"
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
